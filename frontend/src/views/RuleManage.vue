@@ -39,7 +39,13 @@
         <el-table-column prop="version" label="版本" width="80" />
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" @click="openEditDialog(row)">编辑</el-button>
+            <el-button 
+              size="small" 
+              :disabled="row.status === 'published'"
+              @click="openEditDialog(row)"
+            >
+              编辑
+            </el-button>
             <el-button
               v-if="row.status === 'draft'"
               size="small"
@@ -47,6 +53,14 @@
               @click="handlePublish(row)"
             >
               发布
+            </el-button>
+            <el-button
+              v-if="row.status === 'offline'"
+              size="small"
+              type="success"
+              @click="handlePublish(row)"
+            >
+              重新发布
             </el-button>
             <el-button
               v-if="row.status === 'published'"
@@ -286,6 +300,12 @@ const openCreateDialog = () => {
 
 // 打开编辑对话框
 const openEditDialog = (row: Rule) => {
+  // 已发布的规则不能编辑，需要先下线
+  if (row.status === 'published') {
+    ElMessage.warning('已发布的规则不能直接编辑，请先下线后再编辑。')
+    return
+  }
+  
   isEditing.value = true
   currentRuleId.value = row.id
   form.name = row.name
@@ -371,14 +391,20 @@ const handleSubmit = async () => {
   })
 }
 
-// 发布规则
+// 发布规则（支持从 draft 或 offline 状态发布）
 const handlePublish = async (row: Rule) => {
   try {
-    await ElMessageBox.confirm('确定要发布该规则吗？发布后规则可以被执行。', '确认发布', {
+    const isRepublish = row.status === 'offline'
+    const confirmMessage = isRepublish 
+      ? '确定要重新发布该规则吗？重新发布后规则可以被执行。'
+      : '确定要发布该规则吗？发布后规则可以被执行。'
+    const confirmTitle = isRepublish ? '确认重新发布' : '确认发布'
+    
+    await ElMessageBox.confirm(confirmMessage, confirmTitle, {
       type: 'warning'
     })
     await publishRule(row.id)
-    ElMessage.success('规则发布成功')
+    ElMessage.success(isRepublish ? '规则重新发布成功' : '规则发布成功')
     await loadRules()
   } catch (error) {
     if (error !== 'cancel') {

@@ -36,10 +36,13 @@ def api_create_rule(payload: RuleCreate, db: Session = Depends(get_db)):
 
 @router.put("/{rule_id}", response_model=RuleOut)
 def api_update_rule(rule_id: int, payload: RuleUpdate, db: Session = Depends(get_db)):
-    rule = update_rule(db, rule_id, payload)
-    if not rule:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Rule not found")
-    return rule
+    try:
+        rule = update_rule(db, rule_id, payload)
+        if not rule:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Rule not found")
+        return rule
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.post("/{rule_id}/publish", response_model=RuleOut)
