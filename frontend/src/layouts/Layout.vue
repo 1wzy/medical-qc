@@ -239,6 +239,7 @@ const onTabRemove = (path: string) => {
 }
 
 /* ===== 侧边栏（白色 + 阴影） ===== */
+
 .aside {
   background: #ffffff;
   border-top-left-radius: 12px;
