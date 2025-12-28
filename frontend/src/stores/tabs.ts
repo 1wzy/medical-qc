@@ -46,11 +46,19 @@ export const useTabsStore = defineStore('tabs', () => {
     activePath.value = path
   }
 
+  function updateTabTitle(path: string, title: string) {
+    const tab = tabs.value.find(t => t.path === path)
+    if (tab) {
+      tab.title = title
+    }
+  }
+
   return {
     tabs,
     activePath,
     addTab,
     removeTab,
     setActive,
+    updateTabTitle,
   }
 })

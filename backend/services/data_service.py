@@ -197,12 +197,34 @@ def delete_dataset(db: Session, dataset_id: int) -> bool:
 
 def get_dataset_with_basic_data(db: Session, dataset_id: int) -> Optional[Dataset]:
     """获取数据集及其关联的基础数据"""
-    dataset = get_dataset(db, dataset_id)
-    if not dataset:
-        return None
-    
-    # 如果数据集是从基础数据选择的，可以在这里加载关联数据
-    # 目前直接返回数据集，前端可以根据data_ids再查询
-    return dataset
+    try:
+        dataset = get_dataset(db, dataset_id)
+        if not dataset:
+            return None
+        
+        # 如果数据集是从基础数据选择的，加载关联的基础数据
+        if dataset.data_source == 'select':
+            data_ids = dataset.data_ids_list()
+            if data_ids and len(data_ids) > 0:
+                from models.data import BasicData
+                try:
+                    basic_data_items = db.query(BasicData).filter(BasicData.id.in_(data_ids)).all()
+                    # 将基础数据附加到数据集对象（用于序列化）
+                    dataset._basic_data_list = basic_data_items
+                except Exception as e:
+                    print(f"[ERROR] 加载基础数据失败: {e}")
+                    dataset._basic_data_list = []
+            else:
+                dataset._basic_data_list = []
+        else:
+            # 上传类型的数据集，没有关联的基础数据
+            dataset._basic_data_list = []
+        
+        return dataset
+    except Exception as e:
+        import traceback
+        print(f"[ERROR] get_dataset_with_basic_data 错误: {e}")
+        print(f"[ERROR] 错误堆栈: {traceback.format_exc()}")
+        raise
 
 

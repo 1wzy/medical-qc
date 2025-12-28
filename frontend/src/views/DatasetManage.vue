@@ -167,6 +167,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import type { UploadFile, UploadProps, FormInstance, FormRules } from 'element-plus'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { UploadFilled, Search } from '@element-plus/icons-vue'
@@ -181,6 +182,8 @@ import {
   type Dataset,
   type BasicData
 } from '@/api/data'
+
+const router = useRouter()
 
 const searchKeyword = ref('')
 const currentPage = ref(1)
@@ -329,21 +332,36 @@ const handleEdit = async (row: Dataset) => {
 }
 
 const handleView = (row: Dataset) => {
-  ElMessageBox.alert(
-    `<div>
-      <p><strong>数据集名称：</strong>${row.name}</p>
-      <p><strong>描述：</strong>${row.description || '无'}</p>
-      <p><strong>数据来源：</strong>${row.data_source === 'upload' ? '上传文件' : '从基础数据选择'}</p>
-      <p><strong>数据条数：</strong>${row.data_count}</p>
-      <p><strong>创建时间：</strong>${row.created_at}</p>
-      <p><strong>更新时间：</strong>${row.updated_at}</p>
-    </div>`,
-    `查看数据集: ${row.name}`,
-    {
-      dangerouslyUseHTMLString: true,
-      confirmButtonText: '关闭'
+  router.push(`/data/dataset/${row.id}`)
+}
+
+// 查看基础数据的JSON内容
+const viewBasicDataJson = async (dataId: number, fileName: string) => {
+  try {
+    const fullData = await getBasicData(dataId)
+    const formattedJson = JSON.stringify(fullData.data_content, null, 2)
+    try {
+      await ElMessageBox.alert(
+        `<div style="max-height: 70vh; overflow: auto;"><pre style="text-align: left; margin: 0; padding: 16px; background: #f5f7fa; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; word-break: break-all;">${formattedJson}</pre></div>`,
+        `查看JSON数据: ${fileName || fullData.file_name}`,
+        {
+          dangerouslyUseHTMLString: true,
+          customClass: 'json-view-dialog',
+          confirmButtonText: '关闭',
+          width: '90%',
+          maxWidth: '1200px'
+        }
+      )
+    } catch (error: any) {
+      // 用户点击右上角 × 或按 ESC 关闭对话框时，会 reject promise
+      // 这是正常行为，不需要显示错误
+      if (error !== 'cancel' && error !== 'close') {
+        console.error('查看JSON对话框错误:', error)
+      }
     }
-  )
+  } catch (error: any) {
+    ElMessage.error('加载JSON数据失败: ' + (error.message || '未知错误'))
+  }
 }
 
 const handleDelete = async (row: Dataset) => {
@@ -568,6 +586,37 @@ const handleCurrentChange = (val: number) => {
   margin-top: 12px;
   color: #606266;
   font-size: 14px;
+}
+
+:deep(.json-view-dialog) {
+  .el-message-box {
+    max-width: 1200px;
+  }
+  
+  .el-message-box__content {
+    max-height: 70vh;
+    overflow: hidden;
+    padding: 0;
+  }
+  
+  .el-message-box__message {
+    padding: 0;
+  }
+  
+  pre {
+    margin: 0;
+    padding: 16px;
+    background: #f5f7fa;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    word-break: break-all;
+    max-height: 70vh;
+    overflow: auto;
+  }
 }
 </style>
 

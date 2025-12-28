@@ -175,7 +175,15 @@ const breadcrumbMap: Record<string, { name: string; parent?: string }> = {
 }
 
 const breadcrumbList = computed(() => {
-  const current = breadcrumbMap[route.path]
+  let path = route.path
+  let current = breadcrumbMap[path]
+  
+  // 处理动态路由 /data/dataset/:id
+  if (path.startsWith('/data/dataset/') && path !== '/data/dataset') {
+    const datasetId = path.split('/').pop()
+    current = { name: `数据集详情 (ID: ${datasetId})`, parent: '/data/dataset' }
+  }
+  
   if (!current) return []
 
   const list = [{ name: current.name, path: route.path }]
@@ -189,11 +197,22 @@ const breadcrumbList = computed(() => {
 watch(
   () => route.path,
   (path) => {
-    const title = breadcrumbMap[path]?.name || path.slice(1)
+    let title = breadcrumbMap[path]?.name
+    
+    // 处理动态路由 /data/dataset/:id
+    if (!title && path.startsWith('/data/dataset/') && path !== '/data/dataset') {
+      const datasetId = path.split('/').pop()
+      title = `数据集详情 (ID: ${datasetId})`
+    }
+    
+    if (!title) {
+      title = path.slice(1) || '首页'
+    }
+    
     tabsStore.addTab({
       path,
       title,
-      closable: path !== '/rules'
+      closable: path !== '/rules' && path !== '/rule/manage'
     })
   },
   { immediate: true }

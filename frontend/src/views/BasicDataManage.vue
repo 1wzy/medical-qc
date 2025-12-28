@@ -109,6 +109,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { UploadFilled, Search } from '@element-plus/icons-vue'
 import {
   getBasicDataList,
+  getBasicData,
   uploadBasicData,
   deleteBasicData,
   batchDeleteBasicData,
@@ -214,16 +215,34 @@ const handleSelectionChange = (selection: DataItem[]) => {
   selectedRows.value = selection
 }
 
-const handleView = (row: BasicData) => {
-  // 显示JSON数据内容
-  ElMessageBox.alert(
-    `<pre>${JSON.stringify(row.data_content, null, 2)}</pre>`,
-    `查看数据: ${row.file_name}`,
-    {
-      dangerouslyUseHTMLString: true,
-      confirmButtonText: '关闭'
+const handleView = async (row: BasicData) => {
+  try {
+    // 获取完整的JSON数据
+    const fullData = await getBasicData(row.id)
+    // 格式化JSON显示
+    const formattedJson = JSON.stringify(fullData.data_content, null, 2)
+    try {
+      await ElMessageBox.alert(
+        `<div style="max-height: 70vh; overflow: auto;"><pre style="text-align: left; margin: 0; padding: 16px; background: #f5f7fa; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; word-break: break-all;">${formattedJson}</pre></div>`,
+        `查看数据: ${row.file_name}`,
+        {
+          dangerouslyUseHTMLString: true,
+          customClass: 'json-view-dialog',
+          confirmButtonText: '关闭',
+          width: '90%',
+          maxWidth: '1200px'
+        }
+      )
+    } catch (error: any) {
+      // 用户点击右上角 × 或按 ESC 关闭对话框时，会 reject promise
+      // 这是正常行为，不需要显示错误
+      if (error !== 'cancel' && error !== 'close') {
+        console.error('查看数据对话框错误:', error)
+      }
     }
-  )
+  } catch (error: any) {
+    ElMessage.error('加载数据失败: ' + (error.message || '未知错误'))
+  }
 }
 
 const handleDelete = async (row: BasicData) => {
@@ -339,6 +358,37 @@ const handleCurrentChange = (val: number) => {
   margin-top: 20px;
   display: flex;
   justify-content: flex-end;
+}
+
+:deep(.json-view-dialog) {
+  .el-message-box {
+    max-width: 1200px;
+  }
+  
+  .el-message-box__content {
+    max-height: 70vh;
+    overflow: hidden;
+    padding: 0;
+  }
+  
+  .el-message-box__message {
+    padding: 0;
+  }
+  
+  pre {
+    margin: 0;
+    padding: 16px;
+    background: #f5f7fa;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    word-break: break-all;
+    max-height: 70vh;
+    overflow: auto;
+  }
 }
 </style>
 

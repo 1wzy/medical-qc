@@ -47,6 +47,10 @@ export interface Dataset {
   updated_at: string
 }
 
+export interface DatasetDetail extends Dataset {
+  basic_data_list?: BasicData[]
+}
+
 export interface DatasetListResponse {
   items: Dataset[]
   total: number
@@ -152,6 +156,13 @@ export function getDatasetList(params: {
  */
 export function getDataset(id: number): Promise<Dataset> {
   return request.get(`/data/dataset/${id}`)
+}
+
+/**
+ * 获取数据集详情（包含关联的基础数据）
+ */
+export function getDatasetDetail(id: number): Promise<DatasetDetail> {
+  return request.get(`/data/dataset/${id}/detail`)
 }
 
 /**

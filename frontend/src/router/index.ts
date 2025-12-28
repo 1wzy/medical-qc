@@ -7,6 +7,7 @@ import RuleSetManage from '@/views/RuleSetManage.vue'
 import BatchManage from '@/views/BatchManage.vue'
 import BasicDataManage from '@/views/BasicDataManage.vue'
 import DatasetManage from '@/views/DatasetManage.vue'
+import DatasetDetail from '@/views/DatasetDetail.vue'
 import ApiTest from '@/views/ApiTest.vue'
 
 const routes = [
@@ -35,7 +36,8 @@ const routes = [
     meta: { requiresAuth: true },
     children: [
       { path: 'basic', name: 'BasicDataManage', component: BasicDataManage },
-      { path: 'dataset', name: 'DatasetManage', component: DatasetManage }
+      { path: 'dataset', name: 'DatasetManage', component: DatasetManage },
+      { path: 'dataset/:id', name: 'DatasetDetail', component: DatasetDetail }
     ]
   },
   // 兼容旧路由

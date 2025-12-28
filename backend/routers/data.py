@@ -265,6 +265,84 @@ def api_list_datasets(
         )
 
 
+@router.get("/dataset/{dataset_id}/detail")
+def api_get_dataset_detail(dataset_id: int, db: Session = Depends(get_db)):
+    """获取数据集详情（包含关联的基础数据）"""
+    try:
+        dataset = get_dataset_with_basic_data(db, dataset_id)
+        if not dataset:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Dataset not found"
+            )
+        
+        # 辅助函数：格式化日期时间
+        def format_datetime(dt):
+            if not dt:
+                return ""
+            if isinstance(dt, str):
+                return dt
+            if hasattr(dt, 'strftime'):
+                return dt.strftime("%Y-%m-%d %H:%M:%S")
+            return str(dt)
+        
+        # 构建响应数据
+        result = {
+            "id": dataset.id,
+            "name": dataset.name,
+            "description": dataset.description,
+            "data_source": dataset.data_source,
+            "data_ids": dataset.data_ids_list(),
+            "data_count": dataset.data_count,
+            "created_at": format_datetime(dataset.created_at),
+            "updated_at": format_datetime(dataset.updated_at),
+            "basic_data_list": []
+        }
+        
+        # 如果有关联的基础数据，添加到响应中
+        if hasattr(dataset, '_basic_data_list') and dataset._basic_data_list:
+            basic_data_list = []
+            for basic_data in dataset._basic_data_list:
+                try:
+                    # 解析 data_content
+                    if isinstance(basic_data.data_content, str):
+                        data_content = json.loads(basic_data.data_content)
+                    else:
+                        data_content = basic_data.data_content or {}
+                    
+                    basic_data_list.append({
+                        "id": basic_data.id,
+                        "file_name": basic_data.file_name,
+                        "file_size": basic_data.file_size,
+                        "data_content": data_content,
+                        "data_type": basic_data.data_type or "json",
+                        "description": basic_data.description,
+                        "created_at": format_datetime(basic_data.created_at),
+                        "updated_at": format_datetime(basic_data.updated_at)
+                    })
+                except Exception as e:
+                    import traceback
+                    print(f"[ERROR] 序列化基础数据 {basic_data.id} 失败: {e}")
+                    print(f"[ERROR] 错误堆栈: {traceback.format_exc()}")
+                    continue
+            
+            result["basic_data_list"] = basic_data_list
+        
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        error_detail = str(e)
+        traceback_str = traceback.format_exc()
+        print(f"[ERROR] 获取数据集详情错误: {error_detail}")
+        print(f"[ERROR] 错误堆栈:\n{traceback_str}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"获取数据集详情失败: {error_detail}"
+        )
+
+
 @router.get("/dataset/{dataset_id}", response_model=DatasetOut)
 def api_get_dataset(dataset_id: int, db: Session = Depends(get_db)):
     """获取单个数据集"""
