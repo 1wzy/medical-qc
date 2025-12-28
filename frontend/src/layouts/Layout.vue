@@ -178,10 +178,22 @@ const breadcrumbList = computed(() => {
   let path = route.path
   let current = breadcrumbMap[path]
   
+  // 处理动态路由 /data/basic/:id
+  if (path.startsWith('/data/basic/') && path !== '/data/basic') {
+    const dataId = path.split('/').pop()
+    current = { name: `数据详情 (ID: ${dataId})`, parent: '/data/basic' }
+  }
+  
   // 处理动态路由 /data/dataset/:id
   if (path.startsWith('/data/dataset/') && path !== '/data/dataset') {
     const datasetId = path.split('/').pop()
     current = { name: `数据集详情 (ID: ${datasetId})`, parent: '/data/dataset' }
+  }
+  
+  // 处理动态路由 /batches/:id
+  if (path.startsWith('/batches/') && path !== '/batches') {
+    const batchId = path.split('/').pop()
+    current = { name: `批次详情 (ID: ${batchId})`, parent: '/batches' }
   }
   
   if (!current) return []
@@ -189,7 +201,7 @@ const breadcrumbList = computed(() => {
   const list = [{ name: current.name, path: route.path }]
   if (current.parent) {
     const parent = breadcrumbMap[current.parent]
-    if (parent) list.unshift({ name: parent.name, path: current.parent })
+    if (parent) list.unshift({ name: parent.name, path: current.parent }) 
   }
   return list
 })
@@ -199,10 +211,22 @@ watch(
   (path) => {
     let title = breadcrumbMap[path]?.name
     
+    // 处理动态路由 /data/basic/:id
+    if (!title && path.startsWith('/data/basic/') && path !== '/data/basic') {
+      const dataId = path.split('/').pop()
+      title = `数据详情 (ID: ${dataId})`
+    }
+    
     // 处理动态路由 /data/dataset/:id
     if (!title && path.startsWith('/data/dataset/') && path !== '/data/dataset') {
       const datasetId = path.split('/').pop()
       title = `数据集详情 (ID: ${datasetId})`
+    }
+    
+    // 处理动态路由 /batches/:id
+    if (!title && path.startsWith('/batches/') && path !== '/batches') {
+      const batchId = path.split('/').pop()
+      title = `批次详情 (ID: ${batchId})`
     }
     
     if (!title) {

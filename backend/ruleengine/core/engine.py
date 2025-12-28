@@ -147,13 +147,22 @@ class RuleEngine:
         
         # 5. 映射输出别名
         outputs = {}
-        for alias, field in node.get("outputs", {}).items():
-            if field in raw_result:
-                outputs[alias] = raw_result[field]
+        output_mapping = node.get("outputs", {})
+        if output_mapping:
+            # 如果配置了输出映射，使用映射
+            for alias, field in output_mapping.items():
+                if field in raw_result:
+                    outputs[alias] = raw_result[field]
+                else:
+                    raise KeyError(f"函数返回中不存在字段 '{field}'，无法映射为 '{alias}'")
+        else:
+            # 如果没有配置输出映射，直接使用函数的返回结果
+            if isinstance(raw_result, dict):
+                outputs = raw_result
             else:
-                raise KeyError(f"函数返回中不存在字段 '{field}'，无法映射为 '{alias}'")
+                outputs = {"result": raw_result}
         
-        # 6. 保存节点输出到上下文（统一转为字符串）
+        # 6. 保存节点输出到上下文
         self.context.set_node_output(str(node_id), outputs)
     
     def _should_skip_remaining(self, node: Dict[str, Any]) -> bool:

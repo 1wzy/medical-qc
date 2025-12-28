@@ -37,39 +37,48 @@
           </template>
         </el-table-column>
         <el-table-column prop="version" label="版本" width="80" />
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="280" fixed="right" align="center">
           <template #default="{ row }">
-            <el-button 
-              size="small" 
-              :disabled="row.status === 'published'"
-              @click="openEditDialog(row)"
-            >
-              编辑
-            </el-button>
-            <el-button
-              v-if="row.status === 'draft'"
-              size="small"
-              type="success"
-              @click="handlePublish(row)"
-            >
-              发布
-            </el-button>
-            <el-button
-              v-if="row.status === 'offline'"
-              size="small"
-              type="success"
-              @click="handlePublish(row)"
-            >
-              重新发布
-            </el-button>
-            <el-button
-              v-if="row.status === 'published'"
-              size="small"
-              type="warning"
-              @click="handleOffline(row)"
-            >
-              下线
-            </el-button>
+            <el-space :size="8" wrap>
+              <el-button 
+                size="small" 
+                :disabled="row.status === 'published'"
+                @click="openEditDialog(row)"
+              >
+                编辑
+              </el-button>
+              <el-button
+                v-if="row.status === 'draft'"
+                size="small"
+                type="success"
+                @click="handlePublish(row)"
+              >
+                发布
+              </el-button>
+              <el-button
+                v-if="row.status === 'offline'"
+                size="small"
+                type="success"
+                @click="handlePublish(row)"
+              >
+                重新发布
+              </el-button>
+              <el-button
+                v-if="row.status === 'published'"
+                size="small"
+                type="warning"
+                @click="handleOffline(row)"
+              >
+                下线
+              </el-button>
+              <el-button
+                size="small"
+                type="danger"
+                @click="handleDelete(row)"
+              >
+                删除
+              </el-button>
+            </el-space>
           </template>
         </el-table-column>
       </el-table>
@@ -210,7 +219,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Plus, Delete } from '@element-plus/icons-vue'
-import { getRules, createRule, updateRule, publishRule, type Rule, type RuleCreate, type RuleUpdate } from '@/api/rule'
+import { getRules, createRule, updateRule, publishRule, deleteRule, type Rule, type RuleCreate, type RuleUpdate } from '@/api/rule'
 
 const loading = ref(false)
 const submitting = ref(false)
@@ -463,6 +472,29 @@ const getTypeTagType = (type: string) => {
     '格式规范性': 'info'
   }
   return map[type] || 'info'
+}
+
+// 删除规则
+const handleDelete = async (row: Rule) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除规则 "${row.name}" 吗？此操作不可恢复。`,
+      '确认删除',
+      {
+        type: 'warning',
+        confirmButtonText: '确定',
+        cancelButtonText: '取消'
+      }
+    )
+    await deleteRule(row.id)
+    ElMessage.success('规则删除成功')
+    await loadRules()
+  } catch (error) {
+    if (error !== 'cancel') {
+      const message = error instanceof Error ? error.message : '未知错误'
+      ElMessage.error('删除失败: ' + message)
+    }
+  }
 }
 
 onMounted(() => {

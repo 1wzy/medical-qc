@@ -1,0 +1,60 @@
+{
+  "rule_id": "chief_complaint_length_check",
+  "rule_name": "主诉字段长度检查",
+  "description": "检查主诉字段的中文字符数是否小于20字",
+  "module": "入院记录",
+  "type": "字段完整性",
+  "deduct": 5,
+  "fields_name": [
+    ["入院记录", "主诉"]
+  ],
+  "function_list": {
+    "nodes": [
+      {
+        "id": 1,
+        "function": "extract_field_content",
+        "params": {
+          "field_name": ["入院记录", "主诉"],
+          "medical_record": {
+            "source": "context",
+            "output": "medical_record"
+          }
+        }
+      },
+      {
+        "id": 2,
+        "function": "count_chinese_characters",
+        "params": {
+          "text": {
+            "source": "node_1",
+            "output": "result"
+          }
+        }
+      },
+      {
+        "id": 3,
+        "function": "is_number_in_range",
+        "params": {
+          "value": {
+            "source": "node_2",
+            "output": "result"
+          },
+          "min_value": 0,
+          "max_value": 19
+        }
+      }
+    ],
+    "result_rule": {
+      "pass": {
+        "source": "node_3",
+        "output": "result",
+        "expect": true
+      }
+    },
+    "explanation_template": {
+      "pass": "主诉字段长度为{{node_2.result}}字，符合要求（小于20字）",
+      "fail": "主诉字段长度为{{node_2.result}}字，不符合要求（应小于20字）"
+    }
+  }
+}
+

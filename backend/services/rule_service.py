@@ -91,3 +91,13 @@ def publish_rule(db: Session, rule_id: int) -> Optional[Rule]:
     db.refresh(rule)
     return rule
 
+
+def delete_rule(db: Session, rule_id: int) -> bool:
+    """删除规则"""
+    rule = get_rule(db, rule_id)
+    if not rule:
+        return False
+    
+    db.delete(rule)
+    db.commit()
+    return True

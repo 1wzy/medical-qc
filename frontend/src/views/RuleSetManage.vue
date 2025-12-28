@@ -130,15 +130,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { getRules, type Rule } from '@/api/rule'
-
-interface RuleSet {
-  id: number
-  name: string
-  description?: string
-  rule_count?: number
-  status: 'active' | 'inactive'
-  rules?: number[]
-}
+import { getRuleSets, createRuleSet, updateRuleSet, deleteRuleSet, type RuleSet } from '@/api/ruleSet'
 
 const loading = ref(false)
 const submitting = ref(false)
@@ -151,18 +143,13 @@ const currentRuleSet = ref<RuleSet | null>(null)
 const selectedRules = ref<number[]>([])
 const availableRules = ref<Rule[]>([])
 
-const ruleSets = ref<RuleSet[]>([
-  // 模拟数据，后续对接后端API
-  { id: 1, name: '入院记录质控规则集', description: '用于入院记录的质控规则', rule_count: 5, status: 'active' },
-  { id: 2, name: '出院记录质控规则集', description: '用于出院记录的质控规则', rule_count: 3, status: 'active' }
-])
+const ruleSets = ref<RuleSet[]>([])
 
-const form = reactive<RuleSet>({
+const form = reactive({
   id: 0,
   name: '',
   description: '',
-  status: 'active',
-  rule_count: 0
+  status: 'active'
 })
 
 const formRules: FormRules = {
@@ -192,7 +179,6 @@ const openCreateDialog = () => {
   form.name = ''
   form.description = ''
   form.status = 'active'
-  form.rule_count = 0
   dialogVisible.value = true
 }
 
@@ -203,14 +189,13 @@ const openEditDialog = (row: RuleSet) => {
   form.name = row.name
   form.description = row.description || ''
   form.status = row.status
-  form.rule_count = row.rule_count || 0
   dialogVisible.value = true
 }
 
 // 打开管理规则对话框
 const openManageDialog = async (row: RuleSet) => {
   currentRuleSet.value = row
-  selectedRules.value = row.rules || []
+  selectedRules.value = row.rule_ids || []
   await loadAvailableRules()
   manageDialogVisible.value = true
 }
@@ -224,21 +209,26 @@ const handleSubmit = async () => {
 
     submitting.value = true
     try {
-      // TODO: 对接后端API
       if (isEditing.value) {
         // 更新规则集
+        const updated = await updateRuleSet(form.id, {
+          name: form.name,
+          description: form.description,
+          status: form.status
+        })
         const index = ruleSets.value.findIndex(r => r.id === form.id)
         if (index !== -1) {
-          ruleSets.value[index] = { ...form }
+          ruleSets.value[index] = updated
         }
         ElMessage.success('规则集更新成功')
       } else {
         // 创建规则集
-        const newRuleSet: RuleSet = {
-          ...form,
-          id: ruleSets.value.length + 1
-        }
-        ruleSets.value.push(newRuleSet)
+        const newRuleSet = await createRuleSet({
+          name: form.name,
+          description: form.description,
+          status: form.status
+        })
+        ruleSets.value.unshift(newRuleSet)
         ElMessage.success('规则集创建成功')
       }
       dialogVisible.value = false
@@ -257,13 +247,13 @@ const handleSaveRules = async () => {
   
   savingRules.value = true
   try {
-    // TODO: 对接后端API保存规则集和规则的关联
-    const ruleSetId = currentRuleSet.value.id
-    const index = ruleSets.value.findIndex(r => r.id === ruleSetId)
-    if (index !== -1 && ruleSets.value[index]) {
-      const ruleSet = ruleSets.value[index]
-      ruleSet.rules = [...selectedRules.value]
-      ruleSet.rule_count = selectedRules.value.length
+    const updated = await updateRuleSet(currentRuleSet.value.id, {
+      rule_ids: selectedRules.value
+    })
+    const index = ruleSets.value.findIndex(r => r.id === currentRuleSet.value!.id)
+    if (index !== -1) {
+      ruleSets.value[index] = updated
+      currentRuleSet.value = updated
     }
     ElMessage.success('规则保存成功')
     manageDialogVisible.value = false
@@ -281,7 +271,7 @@ const handleDelete = async (row: RuleSet) => {
     await ElMessageBox.confirm('确定要删除该规则集吗？', '确认删除', {
       type: 'warning'
     })
-    // TODO: 对接后端API
+    await deleteRuleSet(row.id)
     const index = ruleSets.value.findIndex(r => r.id === row.id)
     if (index !== -1) {
       ruleSets.value.splice(index, 1)
@@ -295,8 +285,21 @@ const handleDelete = async (row: RuleSet) => {
   }
 }
 
+// 加载规则集列表
+const loadRuleSets = async () => {
+  loading.value = true
+  try {
+    ruleSets.value = await getRuleSets()
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '未知错误'
+    ElMessage.error('加载规则集列表失败: ' + message)
+  } finally {
+    loading.value = false
+  }
+}
+
 onMounted(() => {
-  // 可以在这里加载规则集列表
+  loadRuleSets()
 })
 </script>
 

@@ -102,16 +102,32 @@ class ExecutionContext:
         解析单个引用
         
         Args:
-            source_id: 源节点ID
+            source_id: 源节点ID或特殊标识（如 "context"、"node_1" 或 "1"）
             output_key: 输出字段名
             
         Returns:
             引用的值
         """
-        if source_id not in self.node_outputs:
+        # 特殊处理：context 表示执行上下文
+        if source_id == "context":
+            if output_key == "medical_record":
+                if not self.has_medical_record():
+                    raise RuntimeError("执行上下文中没有病历数据")
+                return self.get_medical_record()
+            else:
+                raise KeyError(f"上下文无输出 '{output_key}'，支持的输出: medical_record")
+        
+        # 处理节点引用格式：支持 "node_1" 或 "1" 格式
+        node_id = source_id
+        if source_id.startswith("node_"):
+            # 从 "node_1" 格式提取节点ID "1"
+            node_id = source_id.replace("node_", "")
+        
+        # 普通节点引用
+        if node_id not in self.node_outputs:
             raise RuntimeError(f"节点 {source_id} 尚未执行或不存在")
         
-        node_output = self.node_outputs[source_id]
+        node_output = self.node_outputs[node_id]
         if output_key not in node_output:
             raise KeyError(f"节点 {source_id} 无输出 '{output_key}'")
         

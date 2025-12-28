@@ -8,6 +8,9 @@ from services.rule_service import get_rule
 from schemas.rule import ExecuteResponse
 from ruleengine.core.engine import RuleEngine  # 使用新的规则引擎
 
+# 导入规则引擎函数库，确保装饰器执行（函数注册）
+from ruleengine import functions  # 这会触发所有函数的注册
+
 
 def execute_rule_by_id(
     db: Session,

@@ -11,6 +11,7 @@ from services.rule_service import (
     list_rules,
     update_rule,
     publish_rule,
+    delete_rule,
 )
 
 router = APIRouter()
@@ -34,8 +35,18 @@ def api_create_rule(payload: RuleCreate, db: Session = Depends(get_db)):
     return create_rule(db, payload)
 
 
+@router.post("/{rule_id}/publish", response_model=RuleOut)
+def api_publish_rule(rule_id: int, db: Session = Depends(get_db)):
+    """发布规则"""
+    rule = publish_rule(db, rule_id)
+    if not rule:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Rule not found")
+    return rule
+
+
 @router.put("/{rule_id}", response_model=RuleOut)
 def api_update_rule(rule_id: int, payload: RuleUpdate, db: Session = Depends(get_db)):
+    """更新规则"""
     try:
         rule = update_rule(db, rule_id, payload)
         if not rule:
@@ -45,10 +56,11 @@ def api_update_rule(rule_id: int, payload: RuleUpdate, db: Session = Depends(get
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-@router.post("/{rule_id}/publish", response_model=RuleOut)
-def api_publish_rule(rule_id: int, db: Session = Depends(get_db)):
-    rule = publish_rule(db, rule_id)
-    if not rule:
+@router.delete("/{rule_id}", status_code=status.HTTP_204_NO_CONTENT)
+def api_delete_rule(rule_id: int, db: Session = Depends(get_db)):
+    """删除规则"""
+    success = delete_rule(db, rule_id)
+    if not success:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Rule not found")
-    return rule
+    return None
 

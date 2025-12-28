@@ -75,3 +75,10 @@ export function publishRule(id: number): Promise<Rule> {
   return request.post(`/rules/${id}/publish`)
 }
 
+/**
+ * 删除规则
+ */
+export function deleteRule(id: number): Promise<void> {
+  return request.delete(`/rules/${id}`)
+}
+

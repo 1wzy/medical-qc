@@ -8,6 +8,8 @@ import BatchManage from '@/views/BatchManage.vue'
 import BasicDataManage from '@/views/BasicDataManage.vue'
 import DatasetManage from '@/views/DatasetManage.vue'
 import DatasetDetail from '@/views/DatasetDetail.vue'
+import BatchDetail from '@/views/BatchDetail.vue'
+import BasicDataDetail from '@/views/BasicDataDetail.vue'
 import ApiTest from '@/views/ApiTest.vue'
 
 const routes = [
@@ -36,6 +38,7 @@ const routes = [
     meta: { requiresAuth: true },
     children: [
       { path: 'basic', name: 'BasicDataManage', component: BasicDataManage },
+      { path: 'basic/:id', name: 'BasicDataDetail', component: BasicDataDetail },
       { path: 'dataset', name: 'DatasetManage', component: DatasetManage },
       { path: 'dataset/:id', name: 'DatasetDetail', component: DatasetDetail }
     ]
@@ -50,7 +53,8 @@ const routes = [
     component: Layout,
     meta: { requiresAuth: true },
     children: [
-      { path: '', name: 'BatchManage', component: BatchManage }
+      { path: '', name: 'BatchManage', component: BatchManage },
+      { path: ':id', name: 'BatchDetail', component: BatchDetail }
     ]
   },
   {

@@ -44,7 +44,12 @@ class ResultEvaluator:
         output_key = pass_cond.get("output")
         expected_value = pass_cond.get("expect", True)
         
-        node_output = context.get_node_output(source_id)
+        # 处理节点引用格式：支持 "node_1" 或 "1" 格式
+        node_id = source_id
+        if source_id.startswith("node_"):
+            node_id = source_id.replace("node_", "")
+        
+        node_output = context.get_node_output(node_id)
         actual_value = node_output.get(output_key)
         
         return actual_value == expected_value
