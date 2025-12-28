@@ -5,7 +5,8 @@ import Login from '@/views/Login.vue'
 import RuleManage from '@/views/RuleManage.vue'
 import RuleSetManage from '@/views/RuleSetManage.vue'
 import BatchManage from '@/views/BatchManage.vue'
-import DocumentUpload from '@/views/DocumentUpload.vue'
+import BasicDataManage from '@/views/BasicDataManage.vue'
+import DatasetManage from '@/views/DatasetManage.vue'
 import ApiTest from '@/views/ApiTest.vue'
 
 const routes = [
@@ -29,12 +30,18 @@ const routes = [
     ]
   },
   {
-    path: '/upload',
+    path: '/data',
     component: Layout,
     meta: { requiresAuth: true },
     children: [
-      { path: '', name: 'DocumentUpload', component: DocumentUpload }
+      { path: 'basic', name: 'BasicDataManage', component: BasicDataManage },
+      { path: 'dataset', name: 'DatasetManage', component: DatasetManage }
     ]
+  },
+  // 兼容旧路由
+  {
+    path: '/upload',
+    redirect: '/data/basic'
   },
   {
     path: '/batches',

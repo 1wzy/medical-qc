@@ -18,10 +18,25 @@ if not exist "frontend\" (
     exit /b 1
 )
 
+REM 先停止可能存在的旧进程
+echo 检查并停止旧的服务...
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":8000" ^| findstr "LISTENING"') do (
+    echo 停止后端进程 (PID: %%a)
+    taskkill /F /PID %%a >nul 2>&1
+)
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":5173" ^| findstr "LISTENING"') do (
+    echo 停止前端进程 (PID: %%a)
+    taskkill /F /PID %%a >nul 2>&1
+)
+
+timeout /t 2 /nobreak >nul
+
 REM 启动后端（使用 conda 环境）
+echo 启动后端服务...
 start "Backend Service" cmd /k "cd /d "%~dp0backend" && call conda activate medical-qc && python main.py"
 timeout /t 2 /nobreak >nul
 REM 启动前端
+echo 启动前端服务...
 start "Frontend Service" cmd /k "cd /d "%~dp0frontend" && npm run dev"
 
 echo.

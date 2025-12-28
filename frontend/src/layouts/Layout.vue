@@ -22,10 +22,14 @@
           <el-menu-item index="/rule/set">规则集管理</el-menu-item>
         </el-sub-menu>
 
-        <el-menu-item index="/upload">
-          <el-icon><Document /></el-icon>
-          <span>文书上传</span>
-        </el-menu-item>
+        <el-sub-menu index="/data">
+          <template #title>
+            <el-icon><Folder /></el-icon>
+            <span>数据管理</span>
+          </template>
+          <el-menu-item index="/data/basic">基础数据管理</el-menu-item>
+          <el-menu-item index="/data/dataset">数据集管理</el-menu-item>
+        </el-sub-menu>
 
         <el-menu-item index="/batches">
           <el-icon><Files /></el-icon>
@@ -107,7 +111,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { DataAnalysis, Fold, Expand, User, ArrowDown, SwitchButton, Document, Files, Tools } from '@element-plus/icons-vue'
+import { DataAnalysis, Fold, Expand, User, ArrowDown, SwitchButton, Folder, Files, Tools } from '@element-plus/icons-vue'
 import { useTabsStore } from '@/stores/tabs'
 import { ElMessage } from 'element-plus'
 
@@ -163,7 +167,9 @@ const breadcrumbMap: Record<string, { name: string; parent?: string }> = {
   '/rule/manage': { name: '规则管理', parent: '/rule' },
   '/rule/set': { name: '规则集管理', parent: '/rule' },
   '/rule': { name: '规则管理' },
-  '/upload': { name: '文书上传' },
+  '/data/basic': { name: '基础数据管理', parent: '/data' },
+  '/data/dataset': { name: '数据集管理', parent: '/data' },
+  '/data': { name: '数据管理' },
   '/batches': { name: '批次管理' },
   '/api-test': { name: 'API测试' }
 }
