@@ -2,7 +2,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Layout from '@/layouts/Layout.vue'
 import Login from '@/views/Login.vue'
-import Dashboard from '@/views/Dashboard.vue'
 import RuleManage from '@/views/RuleManage.vue'
 import RuleSetManage from '@/views/RuleSetManage.vue'
 import BatchManage from '@/views/BatchManage.vue'
@@ -23,14 +22,6 @@ const routes = [
   {
     path: '/login',
     redirect: '/'
-  },
-  {
-    path: '/dashboard',
-    component: Layout,
-    meta: { requiresAuth: true },
-    children: [
-      { path: '', name: 'Dashboard', component: Dashboard }
-    ]
   },
   {
     path: '/rule',
@@ -96,9 +87,9 @@ router.beforeEach((to, from, next) => {
     return
   }
 
-  // 如果已登录但访问登录页（根路径），重定向到工作台
+  // 如果已登录但访问登录页（根路径），重定向到首页
   if (to.path === '/' && isLoggedIn) {
-    next('/dashboard')
+    next('/rule/manage')
     return
   }
 

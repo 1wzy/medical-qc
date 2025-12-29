@@ -13,11 +13,6 @@
         class="side-menu"
         @select="handleMenuSelect"
       >
-        <el-menu-item index="/dashboard">
-          <el-icon><Monitor /></el-icon>
-          <span>工作台</span>
-        </el-menu-item>
-
         <el-sub-menu index="/rule">
           <template #title>
             <el-icon><DataAnalysis /></el-icon>
@@ -68,38 +63,42 @@
           </el-breadcrumb>
         </div>
         <div class="header-right">
-          <div class="action-buttons">
-            <!-- 设置按钮 -->
-            <el-tooltip content="系统设置" placement="bottom" effect="dark">
-              <div class="action-btn" @click="handleSettings">
-                <el-icon><Setting /></el-icon>
-              </div>
-            </el-tooltip>
-
-            <!-- 全屏按钮 -->
-            <el-tooltip :content="isFullscreen ? '退出全屏' : '全屏'" placement="bottom" effect="dark">
-              <div class="action-btn" @click="toggleFullscreen">
-                <el-icon>
-                  <Expand v-if="!isFullscreen" />
-                  <Fold v-else />
-                </el-icon>
-              </div>
-            </el-tooltip>
-
-            <!-- 国际化 -->
-            <I18nDropdown />
-
-            <!-- 消息通知 -->
-            <NotificationDropdown />
-          </div>
-
-          <!-- 用户下拉菜单 -->
-          <UserDropdown />
+          <el-dropdown @command="handleCommand">
+            <span class="user-info">
+              <el-icon><User /></el-icon>
+              <span class="username">{{ username }}</span>
+              <el-icon class="arrow-down"><ArrowDown /></el-icon>
+            </span>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="logout">
+                  <el-icon><SwitchButton /></el-icon>
+                  <span style="margin-left: 8px">退出登录</span>
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
       </el-header>
 
       <!-- Tabs -->
-      <TabsView />
+      <div class="tabs-bar">
+        <el-tabs
+          v-model="tabsStore.activePath"
+          type="card"
+          closable
+          @tab-click="onTabClick"
+          @tab-remove="onTabRemove"
+        >
+          <el-tab-pane
+            v-for="tab in tabsStore.tabs"
+            :key="tab.path"
+            :name="tab.path"
+            :label="tab.title"
+            :closable="tab.closable"
+          />
+        </el-tabs>
+      </div>
 
       <!-- 主内容 -->
       <el-main class="main">
@@ -112,15 +111,9 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { DataAnalysis, Fold, Expand, User, ArrowDown, SwitchButton, Folder, Files, Tools, Monitor, Setting } from '@element-plus/icons-vue'
+import { DataAnalysis, Fold, Expand, User, ArrowDown, SwitchButton, Folder, Files, Tools } from '@element-plus/icons-vue'
 import { useTabsStore } from '@/stores/tabs'
 import { ElMessage } from 'element-plus'
-import NotificationDropdown from '@/components/NotificationDropdown.vue'
-import UserDropdown from '@/components/UserDropdown.vue'
-import I18nDropdown from '@/components/I18nDropdown.vue'
-import TabsView from '@/components/TabsView.vue'
-import { useFullscreen } from '@vueuse/core'
-import { getRouteIcon } from '@/utils/routeIcons'
 
 defineOptions({
   name: 'AppLayout'
@@ -132,21 +125,45 @@ const tabsStore = useTabsStore()
 
 const isCollapse = ref(false)
 
-// 全屏功能
-const { isFullscreen, toggle: toggleFullscreen } = useFullscreen()
-
 // 获取用户名
 const username = computed(() => {
   return localStorage.getItem('username') || '用户'
 })
 
-// 处理设置按钮
-const handleSettings = () => {
-  ElMessage.info('系统设置功能开发中')
+// 处理下拉菜单命令
+const handleCommand = (command: string) => {
+  if (command === 'logout') {
+    handleLogout()
+  }
+}
+
+// 登出功能
+const handleLogout = () => {
+  // 清除登录状态
+  localStorage.removeItem('isLoggedIn')
+  localStorage.removeItem('username')
+  
+  // 清除标签页状态
+  tabsStore.tabs = [
+    {
+      path: '/rule/manage',
+      title: '规则管理',
+      closable: false,
+    },
+  ]
+  tabsStore.activePath = '/rule/manage'
+  
+  ElMessage.success('已退出登录')
+  
+  // 跳转到登录页
+  router.push('/').catch((err) => {
+    if (err.name !== 'NavigationDuplicated') {
+      console.error('路由跳转失败:', err)
+    }
+  })
 }
 
 const breadcrumbMap: Record<string, { name: string; parent?: string }> = {
-  '/dashboard': { name: '工作台' },
   '/rule/manage': { name: '规则管理', parent: '/rule' },
   '/rule/set': { name: '规则集管理', parent: '/rule' },
   '/rule': { name: '规则管理' },
@@ -219,8 +236,7 @@ watch(
     tabsStore.addTab({
       path,
       title,
-      icon: getRouteIcon(path),
-      closable: path !== '/dashboard' // 只有工作台不可关闭
+      closable: path !== '/rules' && path !== '/rule/manage'
     })
   },
   { immediate: true }
@@ -234,6 +250,33 @@ const handleMenuSelect = (index: string) => {
       console.error('菜单导航失败:', err)
     }
   })
+}
+
+interface TabPane {
+  paneName?: string
+  name?: string
+}
+
+const onTabClick = (pane: TabPane) => {
+  const targetPath = pane.paneName || pane.name
+  if (targetPath) {
+    router.push(targetPath).catch((err) => {
+      if (err.name !== 'NavigationDuplicated') {
+        console.error('Tab导航失败:', err)
+      }
+    })
+  }
+}
+
+const onTabRemove = (path: string) => {
+  tabsStore.removeTab(path)
+  if (tabsStore.activePath) {
+    router.push(tabsStore.activePath).catch((err) => {
+      if (err.name !== 'NavigationDuplicated') {
+        console.error('Tab删除后导航失败:', err)
+      }
+    })
+  }
 }
 </script>
 
@@ -321,45 +364,12 @@ const handleMenuSelect = (index: string) => {
   align-items: center;
   gap: 12px;
   flex: 1;
-  padding-left: 12px;
 }
 
 .header-right {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding-right: 16px;
-}
-
-.action-buttons {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding-right: 16px;
-  border-right: 1px solid #ebeef5;
-}
-
-.action-btn {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  color: #606266;
-  background: transparent;
-}
-
-.action-btn:hover {
-  background: #f5f7fa;
-  color: #409eff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.action-btn .el-icon {
-  font-size: 1.25rem;
 }
 
 .user-info {
@@ -391,6 +401,44 @@ const handleMenuSelect = (index: string) => {
   cursor: pointer;
   font-size: 18px;
   color: #606266;
+}
+
+/* ===== Tabs 栏 ===== */
+.tabs-bar {
+  padding: 6px 12px 0;
+  background: #ffffff;
+  border-bottom: 1px solid #ebeef5;
+}
+
+/* Tabs 容器 - 移除所有边框 */
+:deep(.el-tabs--card > .el-tabs__header) {
+  border-bottom: none;
+  border: none;
+}
+
+:deep(.el-tabs--card > .el-tabs__header .el-tabs__nav) {
+  border: none;
+}
+
+/* 单个 Tab - 移除边框 */
+:deep(.el-tabs__item) {
+  height: 36px;
+  line-height: 36px;
+  border-radius: 8px 8px 0 0;
+  margin-right: 6px;
+  background: #f5f7fa;
+  color: #606266;
+  border: none !important;
+  border-bottom: none !important;
+}
+
+/* 激活 Tab - 使用和侧边栏菜单项相同的浅蓝色背景 */
+:deep(.el-tabs__item.is-active) {
+  background: #e8f0ff;
+  color: #409eff;
+  font-weight: 500;
+  border: none !important;
+  border-bottom: none !important;
 }
 
 /* ===== 主内容区域 ===== */
