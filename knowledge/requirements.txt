@@ -1,0 +1,21 @@
+# 知识库向量数据库系统依赖
+# Knowledge Base Vector Database System Dependencies
+
+# LangChain 核心库
+langchain>=0.1.0
+
+# LangChain 文本分割器（独立包）
+langchain-text-splitters>=0.0.1
+
+# Chroma 向量数据库
+langchain-chroma>=0.1.0
+
+# OpenAI Embeddings（用于文本向量化）
+langchain-openai>=0.1.0
+
+# Chroma 数据库客户端（langchain-chroma 的底层依赖）
+chromadb>=0.4.0
+
+# OpenAI API 客户端（langchain-openai 的底层依赖）
+openai>=1.0.0
+

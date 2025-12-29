@@ -1,0 +1,20 @@
+# Chroma 向量数据库文件
+chroma_db/
+*.sqlite3
+*.sqlite
+
+# 元数据索引（可选，如果不想提交到版本控制）
+# meta/
+
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE 文件
+.vscode/
+.idea/
+*.swp
+*.swo
+

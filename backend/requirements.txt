@@ -1,0 +1,21 @@
+# FastAPI 核心依赖
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.0.0
+
+# 数据库相关
+sqlalchemy>=2.0.0
+pymysql>=1.1.0
+cryptography>=41.0.0
+
+# 认证相关（虽然现在不需要登录，但保留以防需要）
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+
+# HTTP 客户端
+httpx>=0.25.0
+requests>=2.31.0
+
+# 其他工具
+python-multipart>=0.0.6  # 用于文件上传
+
